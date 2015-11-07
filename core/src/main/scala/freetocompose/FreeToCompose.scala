@@ -47,13 +47,14 @@ class FreeToCompose(val c: whitebox.Context) {
   import c.universe._
 
   def liftFunctions_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) =
-    generateAnonClass[F](typeName, false)
-  def liftFunctionsVampire_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) =
-    generateAnonClass[F](typeName, true)
+    generateAnonClass[F](typeName, lifted)
 
-  private def generateAnonClass[F[_]](typeNameExpr: Expr[Any], vampire: Boolean)(implicit t: c.WeakTypeTag[F[_]]) = {
+  def liftFunctionsVampire_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) =
+    generateAnonClass[F](typeName, vampire)
+
+  private def generateAnonClass[F[_]](typeNameExpr: Expr[Any], creator: Creator)(implicit t: c.WeakTypeTag[F[_]]) = {
     val Apply(_, Literal(Constant(typeName: String)) :: Nil) = typeNameExpr.tree
-    val mod = generate(TermName(typeName), t.tpe.typeSymbol, false)
+    val mod = generate(TermName(typeName), t.tpe.typeSymbol, creator)
     c.Expr(q"new { ..$mod }")
   }
 
@@ -66,10 +67,10 @@ class FreeToCompose(val c: whitebox.Context) {
     val mod = annottees.map(_.tree).toList match {
       case ClassDef(mods, name, tparams, Template(parents, self, body)) :: rest ⇒ //class/trait
         val (initBody, restBody) = body.splitAt(1)
-        val t2 = Template(parents, self, initBody ++ generate(typeName, opBase) ++ restBody)
+        val t2 = Template(parents, self, initBody ++ generate(typeName, opBase, lifted) ++ restBody)
         ClassDef(mods, name, tparams, t2) :: rest
       case ModuleDef(mods, name, Template(parents, self, body)) :: rest ⇒ // object
-        val t2 = Template(parents, self, generate(typeName, opBase) ++ body)
+        val t2 = Template(parents, self, generate(typeName, opBase, lifted) ++ body)
         ModuleDef(mods, name, t2) :: rest
       case a :: rest ⇒
         c.abort(c.enclosingPosition, "AddLiftingFunctions annotation only supported on classes and objects")
@@ -77,7 +78,28 @@ class FreeToCompose(val c: whitebox.Context) {
     c.Expr(q"..$mod")
   }
 
-  private def generate(name: Name, opBase: Symbol, useVampire: Boolean = false): List[Tree] = {
+  private type Creator = (TypeName, TermName, Type, Symbol, Iterable[(TermName, Type)]) ⇒ Tree
+  private def lifted(freeType: TypeName, name: TermName, A: Type, op: Symbol,
+    params: Iterable[(TermName, Type)]): Tree = {
+    val paramNames = params.map(_._1)
+    val paramDefs = params.map { p ⇒ q"""${p._1}: ${p._2}""" }
+    q"""def $name(..$paramDefs): $freeType[$A] = _root_.cats.free.Free.liftF($op(..$paramNames))"""
+  }
+  private def vampire(freeType: TypeName, name: TermName, A: Type, op: Symbol,
+    params: Iterable[(TermName, Type)]): Tree = {
+    val paramDefs = params.zipWithIndex.map {
+      case ((_, tpe), index) ⇒
+        val name = TermName("in" + (index + 1))
+        q"""$name: $tpe"""
+    }
+    if (paramDefs.size > 5) c.abort(c.enclosingPosition, s"More parameters in ${op.name} than supported " +
+      "by the FreeMacro. Please tell the maintainer to extend it.")
+    val vampire = TermName(s"vampire${paramDefs.size}_impl")
+    q"""@_root_.free.vampire($op)
+          def $name(..$paramDefs): $freeType[$A] = macro _root_.freetocompose.FreeToCompose.$vampire"""
+  }
+
+  private def generate(name: Name, opBase: Symbol, creator: Creator): List[Tree] = {
     val freeTypeName = name.toTypeName
     val freeTypeTree =
       q"""type $freeTypeName[A] =
@@ -97,14 +119,15 @@ class FreeToCompose(val c: whitebox.Context) {
 
     val functions = opClass.knownDirectSubclasses.toList.map {
       case s: ClassSymbol ⇒
-        forImplementation(opBase.asType.toType, freeTypeName, useVampire)(s)
+        forImplementation(opBase.asType.toType, freeTypeName, creator)(s)
     }
 
     freeTypeTree :: monadDeclTree :: functions
   }
 
+
   /** Creates "myOp(text: String): FT[Unit]" from "case class MyOp(text: String)" */
-  private def forImplementation(base: Type, freeType: TypeName, useVampire: Boolean)(opImpl: ClassSymbol): Tree = {
+  private def forImplementation(base: Type, freeType: TypeName, creator: Creator)(opImpl: ClassSymbol): Tree = {
     // inspired by https://gist.github.com/travisbrown/43c9dc072bfb2bba2611
     val name = TermName(classNameFunctionName(opImpl.name.toString))
     //TODO handle MyOperation[A] extends Op[A]
@@ -113,24 +136,8 @@ class FreeToCompose(val c: whitebox.Context) {
     val companion = opImpl.companion
     val params = caseClassFields(opImpl.typeSignature)
 
-    if (useVampire) {
-      val paramDefs = params.zipWithIndex.map {
-        case ((_, tpe), index) ⇒
-          val name = TermName("in" + (index + 1))
-          q"""$name: $tpe"""
-      }
-      if (paramDefs.size > 5) c.abort(c.enclosingPosition, s"More parameters in ${companion.name} than supported " +
-        "by the FreeMacro. Please tell the maintainer to extend it.")
-      val vampire = TermName(s"vampire${paramDefs.size}_impl")
-      q"""@_root_.free.vampire($companion)
-          def $name(..$paramDefs): $freeType[$A] = macro _root_.freetocompose.FreeToCompose.$vampire"""
-    } else {
-      val paramNames = params.map(_._1)
-      val paramDefs = params.map { p ⇒ q"""${p._1}: ${p._2}""" }
-      q"""def $name(..$paramDefs): $freeType[$A] = _root_.cats.free.Free.liftF($companion(..$paramNames))"""
-    }
+    creator(freeType, name, A, companion, params)
   }
-
 
   //Vampire Methods to avoid structural type warning
   def vampire0_impl() =
