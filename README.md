@@ -32,6 +32,7 @@ Console.functions will contain the following definitions:
 
 Use the lifted functions like usual:
 
+    import Console.functions._
     val program: Console[String] = {
       for {
         _ <- println("Please tell me your name (empty to exit):")
