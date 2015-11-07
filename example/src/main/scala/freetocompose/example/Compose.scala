@@ -38,29 +38,69 @@ object Inject {
 }
 
 
+// As presented by Runar
 object Compose {
-  class Consoles[F[_]](implicit i: Inject[ConsoleOp, F]) {
+  class Console[F[_]](implicit i: Inject[ConsoleOp, F]) {
     def println(text: String) = lift(Println(text))
     def readln() = lift(Readln())
     private def lift[A](op: ConsoleOp[A]): Free[F, A] = Free.liftF(i(op))
   }
-  class Stores[F[_]](implicit i: Inject[StoreOp, F]) {
+  class Store[F[_]](implicit i: Inject[StoreOp, F]) {
     def put(key: String, value: String) = lift(Put(key, value))
     def get(key: String) = lift(Get(key))
     private def lift[A](op: StoreOp[A]): Free[F, A] = Free.liftF(i(op))
   }
 }
-
 object Usage {
   import Compose._
-
-  def program[F[_]](implicit C: Consoles[F], S: Stores[F]): Free[F, Unit] = {
+  def askForName[F[_]](implicit C: Console[F], S: Store[F]): Free[F, String] = {
     import C._
     import S._
     for {
       _ <- println("Welcome, please enter your name:")
       name <- readln()
       _ <- put("name", name)
+    } yield name
+  }
+  def assignRoom[F[_]](implicit C: Console[F], S: Store[F]): Free[F, Unit] = {
+    import C._
+    import S._
+    for {
+      name <- askForName
+      room <- get("nextRoom")
+      _ <- println(s"Hi $name, you have been assigned room $room")
     } yield ()
   }
+}
+
+
+// Alternative method where the implicits are on the lifted functions
+// Advantages:
+//  - primitives same as derived
+//  - no imports in method
+//  - shorter implementation
+object Compose2 {
+  private def lift[Op[_], F[_], A](op: Op[A])(implicit inject: Inject[Op, F]) = Free.liftF(inject(op))
+
+  type Console[F[_]] = Inject[ConsoleOp, F]
+  def println[F[_] : Console](text: String) = lift(Println(text))
+  def readln[F[_] : Console]() = lift(Readln())
+
+  type Store[F[_]] = Inject[StoreOp, F]
+  def put[F[_] : Store](key: String, value: String) = lift(Put(key, value))
+  def get[F[_] : Store](key: String) = lift(Get(key))
+}
+object Usage2 {
+  import Compose2._
+  def askForName[F[_] : Console : Store] = for {
+    _ <- println("Welcome, please enter your name:")
+    name <- readln()
+    _ <- put("name", name)
+  } yield name
+
+  def assignRoom[F[_] : Console : Store] = for {
+    name <- askForName
+    room <- get("nextRoom")
+    _ <- println(s"Hi $name, you have been assigned room $room")
+  } yield ()
 }
