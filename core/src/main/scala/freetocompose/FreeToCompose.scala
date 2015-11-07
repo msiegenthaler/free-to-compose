@@ -25,7 +25,7 @@ class AddLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
 /**
   * Usage:
   * <pre>
-  *  sealed trait Op[+A]
+  * sealed trait Op[+A]
   * case class MyOp(a: String) extends Op[Unit]
   * val monadic = FreeMacro.liftFunctions[Op]('Mon)
   * import monadic._
@@ -40,37 +40,46 @@ object FreeToCompose {
 
 //Private stuff below
 
-//Vampire-body, see http://meta.plasm.us/posts/2013/07/12/vampire-methods-for-structural-types/
-class vampire(tree: Any) extends StaticAnnotation
-
 class FreeToCompose(val c: whitebox.Context) {
   import c.universe._
+  import Describe._
 
-  def liftFunctions_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) =
-    generateAnonClass[F](typeName, lifted)
+  def liftFunctions_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) = {
+    val desc = Describe(t.tpe.typeSymbol)
+    val alias = macroParameter(typeName.tree)
 
-  def liftFunctionsVampire_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) =
-    generateAnonClass[F](typeName, vampire)
+    anonClass(typeAlias(alias, desc) ::
+      monadDefinition(desc) ::
+      desc.ops.map(liftedFunction(alias, _)))
+  }
 
-  private def generateAnonClass[F[_]](typeNameExpr: Expr[Any], creator: Creator)(implicit t: c.WeakTypeTag[F[_]]) = {
-    val Apply(_, Literal(Constant(typeName: String)) :: Nil) = typeNameExpr.tree
-    val mod = generate(TermName(typeName), t.tpe.typeSymbol, creator)
-    c.Expr(q"new { ..$mod }")
+  def liftFunctionsVampire_impl[F[_]](typeName: Expr[Any])(implicit t: c.WeakTypeTag[F[_]]) = {
+    val desc = Describe(t.tpe.typeSymbol)
+    val alias = macroParameter(typeName.tree)
+
+    anonClass(typeAlias(alias, desc) ::
+      monadDefinition(desc) ::
+      desc.ops.map(liftedFunctionWithVampire(alias, _)))
   }
 
   def addLiftFunctionsAnnotation_impl(annottees: Expr[Any]*): Expr[Any] = {
-    val q"new $_[$opIdent](${typeNameTree: Tree}).macroTransform(..$_)" = c.macroApplication
+    val q"new $_[$opIdent](${typeName: Tree}).macroTransform(..$_)" = c.macroApplication
     val opBase = c.typecheck(q"???.asInstanceOf[$opIdent[Unit]]").tpe.typeSymbol
-    val Apply(_, Literal(Constant(typeNameString: String)) :: Nil) = typeNameTree
-    val typeName = TermName(typeNameString)
+
+    val desc = Describe(opBase)
+    val alias = macroParameter(typeName)
+
+    val toAdd = typeAlias(alias, desc) ::
+      monadDefinition(desc) ::
+      desc.ops.map(liftedFunction(alias, _))
 
     val mod = annottees.map(_.tree).toList match {
       case ClassDef(mods, name, tparams, Template(parents, self, body)) :: rest ⇒ //class/trait
         val (initBody, restBody) = body.splitAt(1)
-        val t2 = Template(parents, self, initBody ++ generate(typeName, opBase, lifted) ++ restBody)
+        val t2 = Template(parents, self, initBody ++ toAdd ++ restBody)
         ClassDef(mods, name, tparams, t2) :: rest
       case ModuleDef(mods, name, Template(parents, self, body)) :: rest ⇒ // object
-        val t2 = Template(parents, self, generate(typeName, opBase, lifted) ++ body)
+        val t2 = Template(parents, self, toAdd ++ body)
         ModuleDef(mods, name, t2) :: rest
       case a :: rest ⇒
         c.abort(c.enclosingPosition, "AddLiftingFunctions annotation only supported on classes and objects")
@@ -78,67 +87,49 @@ class FreeToCompose(val c: whitebox.Context) {
     c.Expr(q"..$mod")
   }
 
-  private type Creator = (TypeName, TermName, Type, Symbol, Iterable[(TermName, Type)]) ⇒ Tree
-  private def lifted(freeType: TypeName, name: TermName, A: Type, op: Symbol,
-    params: Iterable[(TermName, Type)]): Tree = {
-    val paramNames = params.map(_._1)
-    val paramDefs = params.map { p ⇒ q"""${p._1}: ${p._2}""" }
-    q"""def $name(..$paramDefs): $freeType[$A] = _root_.cats.free.Free.liftF($op(..$paramNames))"""
+
+  private def anonClass(of: List[Tree]): Tree = q"new {..$of}"
+
+  private def macroParameter(tree: Tree) = {
+    val Apply(_, Literal(Constant(typeName: String)) :: Nil) = tree
+    TypeName(typeName)
   }
-  private def vampire(freeType: TypeName, name: TermName, A: Type, op: Symbol,
-    params: Iterable[(TermName, Type)]): Tree = {
-    val paramDefs = params.zipWithIndex.map {
-      case ((_, tpe), index) ⇒
+  private def macroAnnotation[T](implicit t: WeakTypeTag[T]): Annotation = {
+    c.macroApplication.symbol.annotations.filter(
+      _.tree.tpe <:< t.tpe
+    ).headOption.getOrElse(c.abort(c.enclosingPosition, s"Annotation ${t.tpe.typeSymbol.name} not found."))
+  }
+
+  private def typeAlias(name: TypeName, desc: Description): Tree = {
+    q"type $name[A] = _root_.cats.free.Free[${desc.opBase.typeSymbol}, A]"
+  }
+
+  private def monadDefinition(desc: Description): Tree = {
+    q"""implicit val monad = _root_.cats.free.Free.freeMonad[${desc.opBase.typeSymbol}]"""
+  }
+
+  private def liftedFunction(typeAlias: TypeName, op: Op): Tree = {
+    val paramNames = op.params.map(_.name)
+    val paramDefs = op.params.map { p ⇒ q"${p.name}: ${p.tpe}" }
+    q"""def ${op.functionName}(..$paramDefs): $typeAlias[${op.opA}] =
+          _root_.cats.free.Free.liftF(${op.companion}(..$paramNames))"""
+  }
+
+  private def liftedFunctionWithVampire(typeAlias: TypeName, op: Op): Tree = {
+    val paramDefs = op.params.zipWithIndex.map {
+      case (Field(_, tpe), index) ⇒
         val name = TermName("in" + (index + 1))
         q"""$name: $tpe"""
     }
-    if (paramDefs.size > 5) c.abort(c.enclosingPosition, s"More parameters in ${op.name} than supported " +
-      "by the FreeMacro. Please tell the maintainer to extend it.")
-    val vampire = TermName(s"vampire${paramDefs.size}_impl")
-    q"""@_root_.free.vampire($op)
-          def $name(..$paramDefs): $freeType[$A] = macro _root_.freetocompose.FreeToCompose.$vampire"""
-  }
-
-  private def generate(name: Name, opBase: Symbol, creator: Creator): List[Tree] = {
-    val freeTypeName = name.toTypeName
-    val freeTypeTree =
-      q"""type $freeTypeName[A] =
-            _root_.cats.free.Free[${opBase.asType}, A]"""
-
-    val monadDeclTree =
-      q"""implicit val monad =
-            _root_.cats.free.Free.freeMonad[${opBase.asType}]"""
-
-    val opClass = opBase.asClass
-    if (!opClass.isSealed)
-      c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad is not sealed")
-    if (opClass.knownDirectSubclasses.isEmpty)
-      c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad has no subclasses. " +
-        s"If you're sure you have subclasses ans use @AddLiftingFunctions then this is a compilation order problem. " +
-        s"In that case please use FreeMonad.liftFunctions.")
-
-    val functions = opClass.knownDirectSubclasses.toList.map {
-      case s: ClassSymbol ⇒
-        forImplementation(opBase.asType.toType, freeTypeName, creator)(s)
+    if (paramDefs.size > 5) {
+      c.abort(c.enclosingPosition, s"More parameters in ${op.name} than supported " +
+        "by the FreeMacro. Please tell the maintainer to extend it.")
     }
-
-    freeTypeTree :: monadDeclTree :: functions
+    val vampire = TermName(s"vampire${paramDefs.size}_impl")
+    q"""@_root_.freetocompose.vampire(${op.companion})
+        def ${op.functionName}(..$paramDefs): $typeAlias[${op.opA}] =
+          macro _root_.freetocompose.FreeToCompose.$vampire"""
   }
-
-
-  /** Creates "myOp(text: String): FT[Unit]" from "case class MyOp(text: String)" */
-  private def forImplementation(base: Type, freeType: TypeName, creator: Creator)(opImpl: ClassSymbol): Tree = {
-    // inspired by https://gist.github.com/travisbrown/43c9dc072bfb2bba2611
-    val name = TermName(classNameFunctionName(opImpl.name.toString))
-    //TODO handle MyOperation[A] extends Op[A]
-
-    val A = opImpl.typeSignature.baseType(base.typeSymbol).typeArgs.head
-    val companion = opImpl.companion
-    val params = caseClassFields(opImpl.typeSignature)
-
-    creator(freeType, name, A, companion, params)
-  }
-
   //Vampire Methods to avoid structural type warning
   def vampire0_impl() =
     q"_root_.cats.free.Free.liftF($companionFromVampire())"
@@ -154,23 +145,55 @@ class FreeToCompose(val c: whitebox.Context) {
     q"_root_.cats.free.Free.liftF($companionFromVampire($in1, $in2, $in3, $in4, $in5))"
   private def companionFromVampire = macroAnnotation[vampire].tree.children.tail.head
 
-  /** Current macro Annotation. */
-  private def macroAnnotation[T](implicit t: WeakTypeTag[T]): Annotation = {
-    c.macroApplication.symbol.annotations.filter(
-      _.tree.tpe <:< t.tpe
-    ).headOption.getOrElse(c.abort(c.enclosingPosition, s"Annotation ${t.tpe.typeSymbol.name} not found."))
-  }
 
-  /** Converts MyOperation to myOperation */
-  private def classNameFunctionName(className: String): String = className.head.toLower + className.tail
+  /** Describes an operation hierarchy. */
+  private object Describe {
+    case class Description(opBase: Type, ops: List[Op])
+    case class Op(name: TypeName, companion: Symbol, opA: Type, params: List[Field]) {
+      /** myOperation for MyOperation */
+      def functionName = {
+        val className = name.toString
+        TermName(className.head.toLower + className.tail)
+      }
+    }
+    case class Field(name: TermName, tpe: Type)
 
-  /** Extracts [(text, String), (number, Int) from "case class MyClass(text: String, number: Int)" */
-  private def caseClassFields(tpe: Type): Iterable[(TermName, Type)] = {
-    tpe.decls.collect {
-      case accessor: MethodSymbol if accessor.isCaseAccessor ⇒
-        accessor.typeSignature match {
-          case NullaryMethodType(returnType) ⇒ (accessor.name, returnType)
-        }
+    def apply(opBase: Type): Description = apply(opBase.typeSymbol)
+
+    def apply(opBase: Symbol): Description = {
+      val opBaseClass = opBase.asClass
+
+      if (!opBaseClass.isSealed)
+        c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad is not sealed")
+      if (opBaseClass.knownDirectSubclasses.isEmpty)
+        c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad has no subclasses. " +
+          s"If you're sure you have subclasses ans use @AddLiftingFunctions then this is a compilation order problem. " +
+          s"In that case please use FreeMonad.liftFunctions.")
+      val ops = opBaseClass.knownDirectSubclasses.toList.map { case s: ClassSymbol ⇒ describeOp(s, opBaseClass) }
+
+      Description(opBase.asType.toType, ops)
+    }
+
+    /** Describes a "case class MyOp(text: String) extends Op[Unit]" */
+    private def describeOp(opClass: ClassSymbol, opBase: ClassSymbol): Op = {
+      val name = opClass.name
+      val companion = opClass.companion
+      val a = opClass.typeSignature.baseType(opBase.asType).typeArgs.head
+      val params = caseClassFields(opClass.typeSignature)
+      Op(name, companion, a, params.toList)
+    }
+
+    /** Extracts [Field(text, String), Field(number, Int)] from a "case class MyClass(text: String, number: Int)" */
+    private def caseClassFields(tpe: Type): Iterable[Field] = {
+      tpe.decls.collect {
+        case accessor: MethodSymbol if accessor.isCaseAccessor ⇒
+          accessor.typeSignature match {
+            case NullaryMethodType(returnType) ⇒ Field(accessor.name, returnType)
+          }
+      }
     }
   }
 }
+
+//Vampire-body, see http://meta.plasm.us/posts/2013/07/12/vampire-methods-for-structural-types/
+class vampire(tree: Any) extends StaticAnnotation
