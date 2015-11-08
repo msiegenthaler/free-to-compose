@@ -1,6 +1,6 @@
 package freetocompose.example
 
-import freetocompose.{AddComposingFunctions, AddLiftingFunctions, FreeToCompose}
+import freetocompose.{addComposingFunctions, addLiftingFunctions, FreeToCompose}
 
 object ConsoleOps {
   sealed trait ConsoleOp[+A]
@@ -10,7 +10,7 @@ object ConsoleOps {
 
 object Console {
   val functions = FreeToCompose.liftFunctions[ConsoleOps.ConsoleOp]('Console)
-  @AddComposingFunctions[ConsoleOps.ConsoleOp]('Console) object composing
+  @addComposingFunctions[ConsoleOps.ConsoleOp]('Console) object composing
 }
 
 
@@ -22,5 +22,5 @@ object Console_vampires {
 }
 
 object Console_annotation {
-  @AddLiftingFunctions[ConsoleOps.ConsoleOp]('Console) object functions
+  @addLiftingFunctions[ConsoleOps.ConsoleOp]('Console) object functions
 }

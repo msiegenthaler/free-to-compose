@@ -18,12 +18,12 @@ import scala.reflect.macros.whitebox
   * @tparam Op sealed trait of the Operations
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-class AddLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
+class addLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro FreeToCompose.addLiftFunctionsAnnotation_impl
 }
 
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-class AddComposingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
+class addComposingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro FreeToCompose.addComposingFunctionsAnnotation_impl
 }
 
