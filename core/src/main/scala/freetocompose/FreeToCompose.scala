@@ -79,6 +79,7 @@ class FreeToCompose(val c: whitebox.Context) {
 
     anonClass(typeAlias(alias, desc) ::
       monadDefinition(desc) ::
+      q"import scala.language.experimental.macros" ::
       desc.ops.map(liftedFunctionWithVampire(alias, _)))
   }
 

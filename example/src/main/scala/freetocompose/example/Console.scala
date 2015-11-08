@@ -21,7 +21,6 @@ object Console_val {
   val functions = liftFunctions[ConsoleOps.ConsoleOp]('Console)
 }
 object Console_vampires {
-  import scala.language.experimental.macros
   val functions = liftFunctionsVampire[ConsoleOps.ConsoleOp]('Console)
 }
 
