@@ -200,11 +200,23 @@ class FreeToCompose(val c: whitebox.Context) {
 
       if (!opBaseClass.isSealed)
         c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad is not sealed")
-      if (opBaseClass.knownDirectSubclasses.isEmpty)
-        c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad has no subclasses. " +
-          s"If you're sure you have subclasses ans use @AddLiftingFunctions then this is a compilation order problem. " +
-          s"In that case please use FreeMonad.liftFunctions.")
-      val ops = opBaseClass.knownDirectSubclasses.toList.map { case s: ClassSymbol ⇒ describeOp(s, opBaseClass) }
+
+      val opBaseSubclasses = {
+        if (opBaseClass.knownDirectSubclasses.nonEmpty) opBaseClass.knownDirectSubclasses
+        else {
+          // This is most likely because those classes haven't yet been compiled. So look them up ourselves by
+          // assuming they are in the same object that defined the op itself.
+          val subclasses = opBaseClass.owner.typeSignature.decls.filter(d ⇒ d.isClass &&
+            d.asClass.baseClasses.contains(opBase) && d != opBase)
+          if (subclasses.nonEmpty) subclasses
+          else {
+            c.abort(c.enclosingPosition, s"The base class ${opBase.name} of the free monad has no subclasses. " +
+              s"This might be a compilation order problem. To work around it define the operations in the same " +
+              s"object where you also defined their parent")
+          }
+        }
+      }
+      val ops = opBaseSubclasses.toList.map { case s: ClassSymbol ⇒ describeOp(s, opBaseClass) }
 
       Description(opBase.asType.toType, ops)
     }
