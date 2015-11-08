@@ -1,6 +1,6 @@
 package freetocompose.example
 
-import freetocompose.FreeToCompose
+import freetocompose.{AddComposingFunctions, FreeToCompose}
 
 object StoreOps {
   sealed trait StoreOp[+A]
@@ -10,4 +10,5 @@ object StoreOps {
 
 object Store {
   val functions = FreeToCompose.liftFunctions[StoreOps.StoreOp]('Store)
+  @AddComposingFunctions[StoreOps.StoreOp]('Store) object composing
 }

@@ -22,6 +22,11 @@ class AddLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro FreeToCompose.addLiftFunctionsAnnotation_impl
 }
 
+@compileTimeOnly("enable macro paradise to expand macro annotations")
+class AddComposingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = macro FreeToCompose.addComposingFunctionsAnnotation_impl
+}
+
 /**
   * Usage:
   * <pre>
@@ -62,17 +67,44 @@ class FreeToCompose(val c: whitebox.Context) {
       desc.ops.map(liftedFunctionWithVampire(alias, _)))
   }
 
-  def addLiftFunctionsAnnotation_impl(annottees: Expr[Any]*): Expr[Any] = {
-    val q"new $_[$opIdent](${typeName: Tree}).macroTransform(..$_)" = c.macroApplication
-    val opBase = c.typecheck(q"???.asInstanceOf[$opIdent[Unit]]").tpe.typeSymbol
 
+  def addLiftFunctionsAnnotation_impl(annottees: Expr[Any]*) = {
+    val (opBase, alias) = parseAnnotation
     val desc = Describe(opBase)
-    val alias = macroParameter(typeName)
 
-    val toAdd = typeAlias(alias, desc) ::
-      monadDefinition(desc) ::
-      desc.ops.map(liftedFunction(alias, _))
+    modifyObjectOrClass(annottees,
+      typeAlias(alias, desc) ::
+        monadDefinition(desc) ::
+        desc.ops.map(liftedFunction(alias, _)))
+  }
 
+
+  def addComposingFunctionsAnnotation_impl(annottees: Expr[Any]*) = {
+    val (opBase, alias) = parseAnnotation
+    val desc = Describe(opBase)
+
+    val importHigherKinds =
+      q"import scala.language.higherKinds"
+    val typeAlias =
+      q"type $alias[F[_]] = _root_.freetocompose.Compose.Combine[${desc.opBase.typeSymbol}, F]"
+
+    def function(op: Op) = {
+      val paramNames = op.params.map(_.name)
+      val paramDefs = op.params.map { p ⇒ q"${p.name}: ${p.tpe}" }
+      q"""def ${op.functionName}[F[_] : $alias](..$paramDefs): _root_.cats.free.Free[F, ${op.opA}] =
+          _root_.freetocompose.Compose.lift(${op.companion}(..$paramNames))"""
+    }
+
+    modifyObjectOrClass(annottees,
+      importHigherKinds ::
+        typeAlias ::
+        desc.ops.map(function))
+  }
+
+
+  private def anonClass(of: List[Tree]): Tree = q"new {..$of}"
+
+  private def modifyObjectOrClass(annottees: Traversable[Expr[Any]], toAdd: List[Tree]): Expr[Any] = {
     val mod = annottees.map(_.tree).toList match {
       case ClassDef(mods, name, tparams, Template(parents, self, body)) :: rest ⇒ //class/trait
         val (initBody, restBody) = body.splitAt(1)
@@ -82,14 +114,17 @@ class FreeToCompose(val c: whitebox.Context) {
         val t2 = Template(parents, self, toAdd ++ body)
         ModuleDef(mods, name, t2) :: rest
       case a :: rest ⇒
-        c.abort(c.enclosingPosition, "AddLiftingFunctions annotation only supported on classes and objects")
+        c.abort(c.enclosingPosition, "Annotation only supported on classes and objects")
     }
     c.Expr(q"..$mod")
   }
 
-
-  private def anonClass(of: List[Tree]): Tree = q"new {..$of}"
-
+  private def parseAnnotation: (Symbol, TypeName) = {
+    val q"new $_[$opIdent](${typeName: Tree}).macroTransform(..$_)" = c.macroApplication
+    val opBase = c.typecheck(q"???.asInstanceOf[$opIdent[Unit]]").tpe.typeSymbol
+    val alias = macroParameter(typeName)
+    (opBase, alias)
+  }
   private def macroParameter(tree: Tree) = {
     val Apply(_, Literal(Constant(typeName: String)) :: Nil) = tree
     TypeName(typeName)

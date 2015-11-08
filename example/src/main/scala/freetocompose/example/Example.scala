@@ -32,3 +32,20 @@ object Usage {
     _ <- println(s"Hi $name, you have been assigned room $room")
   } yield ()
 }
+
+object UsageWithMacro {
+  import Console.composing._
+  import Store.composing._
+
+  def askForName[F[_] : Console : Store] = for {
+    _ <- println("Welcome, please enter your name:")
+    name <- readln()
+    _ <- put("name", name)
+  } yield name
+
+  def assignRoom[F[_] : Console : Store] = for {
+    name <- askForName
+    room <- get("nextRoom")
+    _ <- println(s"Hi $name, you have been assigned room $room")
+  } yield ()
+}
