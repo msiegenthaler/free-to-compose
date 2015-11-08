@@ -44,7 +44,7 @@ object ConsoleInterpreterLists {
 }
 
 // Example use of the Console2 free monad
-object Example {
+object ConsoleExample {
   import Console.functions._
   import scala.language.higherKinds
   import cats.std.function._
