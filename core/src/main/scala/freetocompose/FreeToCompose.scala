@@ -11,10 +11,11 @@ import scala.reflect.macros.whitebox
   * <pre>
   * sealed trait Op[+A]
   * case class MyOp(a: String) extends Op[Unit]
-  * &commat;AddLiftingFunctions[Op]('Mon) object monadic
+  * &commat;addLiftingFunctions[Op]('Mon) object monadic
   * import monadic._
   * val a: Mon[Unit] = myOp("hello")
   * </pre>
+  *
   * @tparam Op sealed trait of the Operations
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
@@ -22,12 +23,26 @@ class addLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro FreeToCompose.addLiftFunctionsAnnotation_impl
 }
 
+/**
+  * Usage:
+  * <pre>
+  * sealed trait Op[+A]
+  * case class MyOp(a: String) extends Op[Unit]
+  * &commat;addComposingFunctions[Op]('Mon) object monadic
+  * import monadic._
+  * def p[F[_] : Op] = myOp("hello")
+  * </pre>
+  *
+  * @tparam Op sealed trait of the Operations
+  */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
 class addComposingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro FreeToCompose.addComposingFunctionsAnnotation_impl
 }
 
 /**
+  * Only use if the annoatation (addLiftingFunctions) is impossible to use.
+  *
   * Usage:
   * <pre>
   * sealed trait Op[+A]
