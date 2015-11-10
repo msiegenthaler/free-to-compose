@@ -18,6 +18,9 @@ object Example {
   def assignRoom[F[_] : Console : Store] = for {
     name <- askForName
     room <- get("nextRoom")
-    _ <- println(s"Hi $name, you have been assigned room $room")
+    _ <- {
+      if (room.isDefined) println(s"Hi $name, you have been assigned room $room")
+      else println("Sorry, we have no rooms")
+    }
   } yield ()
 }

@@ -5,7 +5,7 @@ import freetocompose.{addLiftingFunctions, addComposingFunctions}
 object StoreOps {
   sealed trait StoreOp[+A]
   case class Put(key: String, value: String) extends StoreOp[Unit]
-  case class Get(key: String) extends StoreOp[String]
+  case class Get(key: String) extends StoreOp[Option[String]]
 }
 
 object Store {

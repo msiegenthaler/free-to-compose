@@ -11,8 +11,7 @@ object SideEffectStore {
   object Compiler extends (StoreOp ~> Id) {
     def apply[A](fa: StoreOp[A]) = fa match {
       case Put(key, value) ⇒ store.put(key, value); ()
-      case Get(key) ⇒ store.get(key).get
-      //TODO Option
+      case Get(key) ⇒ store.get(key)
     }
   }
 }
@@ -29,8 +28,7 @@ object StateStoreInterpreter {
           v ← State.get
           _ ← State.set(v + (key → value))
         } yield ()
-      case Get(key) ⇒ State.get.map(_.get(key).get)
-      //TODO Option
+      case Get(key) ⇒ State.get.map(_.get(key))
     }
   }
 }
