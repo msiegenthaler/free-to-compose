@@ -1,8 +1,9 @@
 package freetocompose.example
 
 import scala.language.higherKinds
-import Console.composing._
-import Store.composing._
+import freetocompose.Compose.Combined
+import Console.composing._, ConsoleOps.ConsoleOp
+import Store.composing._, StoreOps.StoreOp
 
 object Example {
   def ask[F[_] : Console](prompt: String) = for {
@@ -23,4 +24,13 @@ object Example {
       else println("Sorry, we have no rooms")
     }
   } yield ()
+
+
+  def main(args: Array[String]): Unit = {
+    type App[A] = Combined[ConsoleOp, StoreOp, A]
+    SideEffectStore.store.put("nextRoom", "Berlin")
+    val compiler = ConsoleInterpreterSysout.Compiler || SideEffectStore.Compiler
+    val program = assignRoom[compiler.From].foldMap(compiler)
+    program
+  }
 }
