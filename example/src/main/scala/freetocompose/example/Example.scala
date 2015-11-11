@@ -1,7 +1,7 @@
 package freetocompose.example
 
 import scala.language.higherKinds
-import freetocompose.Compose.Combined
+import freetocompose.Combined
 import Console.composing._, ConsoleOps.ConsoleOp
 import Store.composing._, StoreOps.StoreOp
 
