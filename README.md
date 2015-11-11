@@ -49,4 +49,3 @@ Credits
 - Idea for composition via Coproducts Rúnar Bjarnason (@runarorama): http://functionaltalks.org/2014/11/23/runar-oli-bjarnason-free-monad/
 - How to fix the knownDirectSubclasses problem by Lloyd: https://github.com/lloydmeta/enumeratum
 - The great cats library: https://github.com/non/cats
-- The great shapeless library: https://github.com/milessabin/shapeless
