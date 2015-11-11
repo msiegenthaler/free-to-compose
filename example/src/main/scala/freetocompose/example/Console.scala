@@ -1,6 +1,6 @@
 package freetocompose.example
 
-import freetocompose.FreeToCompose._
+import freetocompose.Macro._
 import freetocompose.{addComposingFunctions, addLiftingFunctions}
 
 object ConsoleOps {

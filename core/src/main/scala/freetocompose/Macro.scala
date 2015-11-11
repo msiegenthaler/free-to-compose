@@ -20,7 +20,7 @@ import scala.reflect.macros.whitebox
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
 class addLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro FreeToCompose.addLiftFunctionsAnnotation_impl
+  def macroTransform(annottees: Any*): Any = macro Macro.addLiftFunctionsAnnotation_impl
 }
 
 /**
@@ -37,7 +37,7 @@ class addLiftingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
 class addComposingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro FreeToCompose.addComposingFunctionsAnnotation_impl
+  def macroTransform(annottees: Any*): Any = macro Macro.addComposingFunctionsAnnotation_impl
 }
 
 /**
@@ -52,15 +52,15 @@ class addComposingFunctions[Op[_]](typeName: Symbol) extends StaticAnnotation {
   * val a: Mon[Unit] = myOp("hello")
   * </pre>
   */
-object FreeToCompose {
-  def liftFunctions[F[_]](typeName: Symbol): Any = macro FreeToCompose.liftFunctions_impl[F]
-  def liftFunctionsVampire[F[_]](typeName: Symbol): Any = macro FreeToCompose.liftFunctionsVampire_impl[F]
+object Macro {
+  def liftFunctions[F[_]](typeName: Symbol): Any = macro Macro.liftFunctions_impl[F]
+  def liftFunctionsVampire[F[_]](typeName: Symbol): Any = macro Macro.liftFunctionsVampire_impl[F]
 }
 
 
 //Private stuff below
 
-class FreeToCompose(val c: whitebox.Context) {
+class Macro(val c: whitebox.Context) {
   import c.universe._
   import Describe._
 
@@ -179,7 +179,7 @@ class FreeToCompose(val c: whitebox.Context) {
     val vampire = TermName(s"vampire${paramDefs.size}_impl")
     q"""@_root_.freetocompose.vampire(${op.companion})
         def ${op.functionName}(..$paramDefs): $typeAlias[${op.opA}] =
-          macro _root_.freetocompose.FreeToCompose.$vampire"""
+          macro _root_.freetocompose.Macro.$vampire"""
   }
   //Vampire Methods to avoid structural type warning
   def vampire0_impl() =
