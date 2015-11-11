@@ -16,13 +16,17 @@ object Example {
     _ <- put("name", name)
   } yield name
 
+  private val rooms = (100 to 200).map(_.toString)
+  def nextRoom[F[_] : Store] = for {
+    roomOpt ← get("lastRoom")
+    room = roomOpt.fold(rooms.head)((r: String) ⇒ rooms.dropWhile(_ != r).drop(1).head)
+    _ ← put("lastRoom", room)
+  } yield room
+
   def assignRoom[F[_] : Console : Store] = for {
     name <- askForName
-    room <- get("nextRoom")
-    _ <- {
-      if (room.isDefined) println(s"Hi $name, you have been assigned room $room")
-      else println("Sorry, we have no rooms")
-    }
+    room <- nextRoom
+    _ <- println(s"Hi $name, you have been assigned room $room")
   } yield ()
 
 
