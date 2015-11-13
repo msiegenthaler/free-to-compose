@@ -49,7 +49,7 @@ to run it use:
 
 
 for the complete example see the code under [Console.scala](example/src/main/scala/freetocompose/example/Console.scala) and
-[ConsoleExample.scala](example/src/main/scala/freetocompose/example/Console.scala)
+[ConsoleExample.scala](example/src/main/scala/freetocompose/example/ConsoleExample.scala)
 
 
 
