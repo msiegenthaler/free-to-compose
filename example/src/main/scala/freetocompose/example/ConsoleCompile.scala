@@ -19,6 +19,12 @@ object ConsoleCompile {
           (ins, outs) = v
           _ ← State.set((ins, outs :+ text))
         } yield ()
+      case Print(text) ⇒
+        for {
+          v ← State.get[Lists]
+          (ins, outs) = v
+          _ ← State.set((ins, outs :+ text))
+        } yield ()
       case Readln() ⇒
         for {
           v ← State.get[Lists]
@@ -32,6 +38,7 @@ object ConsoleCompile {
   object toTrampoline extends (ConsoleOp ~> Trampoline) {
     override def apply[A](fa: ConsoleOp[A]) = fa match {
       case Println(text) ⇒ Trampoline.delay(scala.Console.println(text))
+      case Print(text) ⇒ Trampoline.delay(scala.Console.print(text))
       case Readln() ⇒ Trampoline.delay(scala.io.StdIn.readLine())
     }
   }
@@ -39,6 +46,7 @@ object ConsoleCompile {
   object toId extends (ConsoleOp ~> Id) {
     override def apply[A](fa: ConsoleOp[A]) = fa match {
       case Println(text) ⇒ scala.Console.println(text)
+      case Print(text) ⇒ scala.Console.print(text)
       case Readln() ⇒ scala.io.StdIn.readLine()
     }
   }

@@ -9,7 +9,7 @@ object ConsoleExample {
 
   val program: Console[String] = {
     for {
-      _ <- println("Please tell me your name (empty to exit):")
+      _ <- print("Please tell me your name (empty to exit):")
       greeting = "Hello"
       name <- readln
       _ <- println(s"$greeting $name")

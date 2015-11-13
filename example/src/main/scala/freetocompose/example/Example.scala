@@ -8,7 +8,7 @@ import Store.composing._, StoreOps.StoreOp
 
 object Example {
   def ask[F[_] : Console](prompt: String) = for {
-    _ <- println(prompt)
+    _ <- print(prompt)
     in <- readln()
   } yield in
 
