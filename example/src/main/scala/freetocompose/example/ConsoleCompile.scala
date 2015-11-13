@@ -1,6 +1,7 @@
 package freetocompose.example
 
 import Console.functions.Console, ConsoleOps._
+import cats.free.Trampoline
 import cats.{~>, Id}
 import cats.state.State
 
@@ -27,9 +28,16 @@ object ConsoleCompile {
     }
   }
 
+  /** Interpreter that reads from sysin and writes to sysout directly using trampolining. */
+  object toTrampoline extends (ConsoleOp ~> Trampoline) {
+    override def apply[A](fa: ConsoleOp[A]) = fa match {
+      case Println(text) ⇒ Trampoline.delay(scala.Console.println(text))
+      case Readln() ⇒ Trampoline.delay(scala.io.StdIn.readLine())
+    }
+  }
   /** Interpreter that reads from sysin and writes to sysout directly (side-effect). */
   object toId extends (ConsoleOp ~> Id) {
-    override def apply[A](fa: ConsoleOp[A]): Id[A] = fa match {
+    override def apply[A](fa: ConsoleOp[A]) = fa match {
       case Println(text) ⇒ scala.Console.println(text)
       case Readln() ⇒ scala.io.StdIn.readLine()
     }

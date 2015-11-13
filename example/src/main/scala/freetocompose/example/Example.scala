@@ -1,6 +1,7 @@
 package freetocompose.example
 
 import scala.language.higherKinds
+import cats.std.function._
 import freetocompose.Combined
 import Console.composing._, ConsoleOps.ConsoleOp
 import Store.composing._, StoreOps.StoreOp
@@ -31,9 +32,13 @@ object Example {
 
 
   def main(args: Array[String]): Unit = {
-    type App[A] = Combined[ConsoleOp, StoreOp, A]
-    val compiler = ConsoleCompile.toId || StoreCompile.toId()
+    //We'll use trampoline, but anything like scalaz.Task will do (and be a better choice in real applications.
+    val compiler = ConsoleCompile.toTrampoline || StoreCompile.toTrampoline()
     val program = assignRoom[compiler.From].foldMap(compiler)
-    program
+
+    scala.Console.println("Run 1\n=====")
+    program.run
+    scala.Console.println("-----\nRun 2\n=====")
+    program.run
   }
 }
