@@ -17,11 +17,11 @@ object ConsoleExample {
   }
 
   def main(args: Array[String]): Unit = {
-    val res2 = ConsoleInterpreterLists(repeat(2)(program)).
-      run(("Maya" :: "Mario" :: Nil, Nil)).run
-    scala.Console.println(s"State results in ${res2._2} (outputs = ${res2._1._2})")
+    val lp = repeat(2)(program).foldMap(ConsoleCompile.toListState)
+    val lr = lp.run(("Maya" :: "Mario" :: Nil, Nil)).run
+    scala.Console.println(s"State results in ${lr._2} (outputs = ${lr._1._2})")
 
-    val res = ConsoleInterpreterSysout(iterateUntil((v: String) ⇒ v.isEmpty)(program))
-    scala.Console.println(s"Sysout results in $res")
+    val ir = iterateUntil((v: String) ⇒ v.isEmpty)(program).foldMap(ConsoleCompile.toId) //executes
+    scala.Console.println(s"Sysout results in $ir")
   }
 }

@@ -32,8 +32,7 @@ object Example {
 
   def main(args: Array[String]): Unit = {
     type App[A] = Combined[ConsoleOp, StoreOp, A]
-    SideEffectStore.store.put("nextRoom", "Berlin")
-    val compiler = ConsoleInterpreterSysout.Compiler || SideEffectStore.Compiler
+    val compiler = ConsoleCompile.toId || StoreCompile.toId()
     val program = assignRoom[compiler.From].foldMap(compiler)
     program
   }
