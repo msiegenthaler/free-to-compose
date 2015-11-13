@@ -1,12 +1,12 @@
 package freetocompose.example
 
-// Example use of the Console2 free monad
-object ConsoleExample {
-  import Console.functions._
-  import scala.language.higherKinds
-  import cats.std.function._
-  import Utils._
+import scala.language.higherKinds
+import cats.std.function._
+import Console.functions._
+import Utils._
 
+/** Example usage of the Console free monad */
+object ConsoleExample {
   val program: Console[String] = {
     for {
       _ <- print("Please tell me your name (empty to exit):")
