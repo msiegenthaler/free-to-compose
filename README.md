@@ -83,13 +83,13 @@ The definitions generated inside Console (Store is equivalent) are:
 - def readln[F[_] : Console](): Free[F, String]
 
 
-When using we may now combine the two different kinds of operations into one monad at will:
+When using we may now combine the two different kinds of operations into one monad:
 
-    def askForName[F[_] : Console : Store] = for {                      //need to declare all op-types used as context bounds
+    def hotelCheckin[F[_] : Console : Store] = for {                    //need to declare all op-types used as context bounds
       hotel <- get("hotel")                                             //Store Op
       _ <- println(s"Welcome to the $hotel, please enter your name:")   //Console Op
       name <- readln()                                                  //Console Op
-      _ <- put("name", name)                                            //Store Op
+      _ <- put("customer", name)                                        //Store Op
     } yield name
 
 
