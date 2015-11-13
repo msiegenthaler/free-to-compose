@@ -1,10 +1,11 @@
 Free-to-Compose
 ===============
 
-Library that eases the usage of Free Monads based on cats.
+Library that eases the usage of Free Monads based on cats and allows to compose multiple free monads into one.
 
-Provides macros to generate lifting functions and composable lifting functions. The library can be used
-in two ways: simple lifting functions and a composable variant based on Rúnar's talk "reasonably priced monads".
+It provides macros to automatically generate the lifting functions and composable lifting functions. The library
+can be used in two ways: simple lifting functions and a composable variant based on Rúnar's talk
+"reasonably priced monads".
 
 
 Simple Usage
