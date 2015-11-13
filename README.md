@@ -48,8 +48,8 @@ to run it use:
     pgm.run
 
 
-for the complete example see the code under [Console.scala](example/src/main/scala/freetocompose/Console.scala) and
-[ConsoleExample.scala](example/src/main/scala/freetocompose/Console.scala)
+for the complete example see the code under [Console.scala](example/src/main/scala/freetocompose/example/Console.scala) and
+[ConsoleExample.scala](example/src/main/scala/freetocompose/example/Console.scala)
 
 
 
@@ -99,8 +99,9 @@ of course you then also need to combine the Compilers (= Transforms  = cats.~>):
      val program = assignRoom[compiler.From].foldMap(compiler)
      program.run
 
-for the complete example see the code under [Console.scala](example/src/main/scala/freetocompose/Console.scala),
-[Store.scala](example/src/main/scala/freetocompose/Store.scala) and [Example.scala](example/src/main/scala/freetocompose/Example.scala)
+for the complete example see the code under [Console.scala](example/src/main/scala/freetocompose/example/Console.scala),
+[Store.scala](example/src/main/scala/freetocompose/example/Store.scala) and
+[Example.scala](example/src/main/scala/freetocompose/example/Example.scala)
 
 
 
