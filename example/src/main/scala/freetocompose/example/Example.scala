@@ -1,13 +1,14 @@
 package freetocompose.example
 
 import scala.language.higherKinds
+import cats.std.function._
 import freetocompose.Combined
 import Console.composing._, ConsoleOps.ConsoleOp
 import Store.composing._, StoreOps.StoreOp
 
 object Example {
   def ask[F[_] : Console](prompt: String) = for {
-    _ <- println(prompt)
+    _ <- print(prompt)
     in <- readln()
   } yield in
 
@@ -31,10 +32,13 @@ object Example {
 
 
   def main(args: Array[String]): Unit = {
-    type App[A] = Combined[ConsoleOp, StoreOp, A]
-    SideEffectStore.store.put("nextRoom", "Berlin")
-    val compiler = ConsoleInterpreterSysout.Compiler || SideEffectStore.Compiler
+    //We'll use trampoline, but anything like scalaz.Task will do (and be a better choice in real applications.
+    val compiler = ConsoleCompile.toTrampoline || StoreCompile.toTrampoline()
     val program = assignRoom[compiler.From].foldMap(compiler)
-    program
+
+    scala.Console.println("Run 1\n=====")
+    program.run
+    scala.Console.println("-----\nRun 2\n=====")
+    program.run
   }
 }
