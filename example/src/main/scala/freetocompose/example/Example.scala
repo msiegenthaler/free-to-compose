@@ -2,7 +2,7 @@ package freetocompose.example
 
 import scala.language.higherKinds
 import cats.std.function._
-import freetocompose.Combined
+import cats.data.Coproduct
 import Console.composing._, ConsoleOps.ConsoleOp
 import Store.composing._, StoreOps.StoreOp
 
