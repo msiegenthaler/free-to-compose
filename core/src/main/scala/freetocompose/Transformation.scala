@@ -2,7 +2,6 @@ package freetocompose
 
 import scala.language.higherKinds
 import cats._
-import freetocompose.Combined
 
 class CombinedTransformation[F[_], G[_], H[_]](f: F ~> H, g: G ~> H) extends (Combined[F, G, ?] ~> H) {
   type From[A] = Combined[F, G, A]
