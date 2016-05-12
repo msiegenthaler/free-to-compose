@@ -1,5 +1,6 @@
 Free-to-Compose
 ===============
+[![Build Status](https://travis-ci.org/msiegenthaler/free-to-compose.svg?branch=master)](https://travis-ci.org/msiegenthaler/free-to-compose)
 
 Library that eases the usage of Free Monads based on cats and allows to compose multiple free monads into one.
 
