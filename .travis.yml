@@ -1,3 +1,38 @@
 language: scala
 scala:
    - 2.11.7
+
+script: "sbt ++$TRAVIS_SCALA_VERSION coverage test"
+after_success:
+   - "bash <(curl -s https://codecov.io/bash)"
+   - "sbt ++$TRAVIS_SCALA_VERSION versioneye:updateProject"
+
+jdk:
+  - oraclejdk8
+
+# Use container-based infrastructure
+sudo: false
+
+env:
+  global:
+    #VERSIONEYE_API_KEY=xxx
+    secure: "MkMQS8i6ySPJQsojVVO3/wL4SAQPFmo6XxT7SUCLogjOCvn1K1klbtGenMn5o/G9bOjf1eq9/ry2UEHDkEVDzpyxbKiAprKUGVxNKSe1IyVr/9Ml1WbNBqF+iksgMx/gS07zEOgqoFUENPKKL17FGw1oH2NhrnXjiwBHSdOMGhQ3FkTtjxHIdDDYopxc8kUB+8dK86Kmi+bRtIayAxsgPaf543SHKiSo/uAYVFue5Tc12XAAk83tCm8nJPNyQnmSLN33SE2cmNcnhBShlnlgWkPy4LcbXy/3iLAtBtFu5LUoYUYOD06DYj6IrbRK0giCclUDyTt4T8SYKfXs8I8JF4dm5nymmgoKdPo1EOQ0WBUcqf8pyZCYPk6n/pZOIpglVIF5FlAzyc4oBxtbyXz32xGLzEGAPtRTdUYMhejauckXN5MKTCROKRvyiaAXkbzKzwoLAx83C8nuvC2XFMDUguq8bGXitvshFNkco8S1tr1UJZJe4z3TJ7zOHSDPTVdJgXvStjBGW1t2LRj+Ni8RNwiRsXtoRdwvlkNtNbMByaf7TmTiecgK7F2eSSybX2jKZ0Df5qw+u7jrQ8c5qTzfTBKaqOUjX7rH2LH7vemA1HA/5jy9TMVkbNoe7GNn28IuEqmwUq4jjZeUy3p05yOB5Oa3Ve5q0uIIybB97NiUAfY="
+
+cache:
+  directories:
+  - $HOME/.sbt/0.13/dependency
+  - $HOME/.sbt/boot/scala*
+  - $HOME/.sbt/launchers
+  - $HOME/.ivy2/cache
+
+before_cache:
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+
+notifications:
+  slack:
+    rooms: dingsteam:RAMFhHHEJFRie1VmpxfhKnix
+    on_success: always
+    on_failure: always
+    on_start: never
+    on_pull_requests: false
