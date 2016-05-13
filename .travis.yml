@@ -1,6 +1,6 @@
 language: scala
 scala:
-   - 2.11.8
+   - 2.11.7
 
 script: "sbt ++$TRAVIS_SCALA_VERSION coverage test"
 after_success:
