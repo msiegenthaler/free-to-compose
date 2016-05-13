@@ -28,3 +28,15 @@ lazy val example = project.in(file("example")).
   settings(
     name := "free-to-compose-example"
   )
+
+
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform
+
+SbtScalariform.defaultScalariformSettings
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(MultilineScaladocCommentsStartOnFirstLine, true)
+  .setPreference(RewriteArrowSymbols, true)
+  .setPreference(PreserveDanglingCloseParenthesis, true)

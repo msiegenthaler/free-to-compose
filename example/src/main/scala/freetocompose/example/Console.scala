@@ -1,7 +1,7 @@
 package freetocompose.example
 
 import freetocompose.Macro._
-import freetocompose.{addComposingFunctions, addLiftingFunctions}
+import freetocompose.{ addComposingFunctions, addLiftingFunctions }
 
 object ConsoleOps {
   sealed trait ConsoleOp[+A]
@@ -14,7 +14,6 @@ object Console {
   @addLiftingFunctions[ConsoleOps.ConsoleOp]('Console) object functions
   @addComposingFunctions[ConsoleOps.ConsoleOp]('Console) object composing
 }
-
 
 //The following two variants are essentially the same as above
 

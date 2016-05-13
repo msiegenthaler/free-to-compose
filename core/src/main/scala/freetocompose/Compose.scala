@@ -1,6 +1,6 @@
 package freetocompose
 
-import cats.free.{Free, Inject}
+import cats.free.{ Free, Inject }
 import scala.language.higherKinds
 
 /** Support for coproduct based free monads that allow for mixing of multiple 'languages'. */

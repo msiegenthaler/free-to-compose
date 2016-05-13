@@ -1,6 +1,6 @@
 package freetocompose.example
 
-import freetocompose.{addLiftingFunctions, addComposingFunctions}
+import freetocompose.{ addLiftingFunctions, addComposingFunctions }
 
 object StoreOps {
   sealed trait StoreOp[+A]
