@@ -6,7 +6,10 @@ lazy val commonSettings = Seq(
   organization := "ch.inventsoft",
   scalacOptions += "-feature",
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1")
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1"),
+  baseUrl in versioneye := "https://www.versioneye.com",
+  apiPath in versioneye := "/api/v2",
+  publishCrossVersion in versioneye := true
 )
 
 lazy val core = project.in(file("core")).
@@ -14,8 +17,10 @@ lazy val core = project.in(file("core")).
   settings(
     name := "free-to-compose",
     libraryDependencies += "org.spire-math" %% "cats" % "0.3.0",
-    libraryDependencies += "com.chuusai" %% "shapeless" % "2.2.5"
+    libraryDependencies += "com.chuusai" %% "shapeless" % "2.2.5",
+    propertiesPath in versioneye := ".versioneye.properties"
   )
+  .enablePlugins(VersionEyePlugin)
 
 lazy val example = project.in(file("example")).
   dependsOn(core).
