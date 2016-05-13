@@ -2,9 +2,8 @@ package freetocompose.example
 
 import Console.functions.Console, ConsoleOps._
 import cats.free.Trampoline
-import cats.{~>, Id}
+import cats.{ ~>, Id }
 import cats.data.State
-
 
 object ConsoleCompile {
   type Lists = (List[String], List[String])

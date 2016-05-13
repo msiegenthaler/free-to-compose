@@ -2,7 +2,7 @@ package freetocompose.example
 
 import java.util.concurrent.atomic.AtomicReference
 import cats.free.Trampoline
-import cats.{~>, Id}
+import cats.{ ~>, Id }
 import cats.data.State
 import Store.functions.Store, StoreOps._
 
@@ -36,7 +36,8 @@ object StoreCompile {
   case class toId(initial: Map[String, String] = Map.empty) extends (StoreOp ~> Id) {
     val store = scala.collection.mutable.Map(initial.toSeq: _*)
     def apply[A](fa: StoreOp[A]) = fa match {
-      case Put(key, value) ⇒ store.put(key, value); ()
+      case Put(key, value) ⇒
+        store.put(key, value); ()
       case Get(key) ⇒ store.get(key)
     }
   }
