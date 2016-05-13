@@ -1,7 +1,7 @@
 Free-to-Compose
 ===============
 [![Build Status](https://travis-ci.org/msiegenthaler/free-to-compose.svg?branch=master)](https://travis-ci.org/msiegenthaler/free-to-compose)
-[![codecov](https://codecov.io/gh/msiegenthaler/free-event-sourcing/branch/master/graph/badge.svg)](https://codecov.io/gh/msiegenthaler/free-event-sourcing)
+[![codecov](https://codecov.io/gh/msiegenthaler/free-to-compose/branch/master/graph/badge.svg)](https://codecov.io/gh/msiegenthaler/free-to-compose)
 [![Dependency Status](https://www.versioneye.com/user/projects/5736220d4a0faa000b7efc48/badge.svg?style=flat)](https://www.versioneye.com/user/projects/5736220d4a0faa000b7efc48)
 
 Library that eases the usage of Free Monads based on cats and allows to compose multiple free monads into one.
