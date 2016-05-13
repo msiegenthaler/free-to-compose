@@ -82,7 +82,7 @@ we again use a macro to generate the lifting functions but this time we'll use c
 
 
 The definitions generated inside Console (Store is equivalent) are:
-- type Console[F[_]] = Combine[ConsoleOp, F]
+- type Console[F[_]] = Inject[ConsoleOp, F]
 - def println[F[_] : Console](text: String): Free[F, Unit]
 - def readln[F[_] : Console](): Free[F, String]
 
@@ -112,7 +112,6 @@ for the complete example see the code under [Console.scala](example/src/main/sca
 Implementation
 --------------
 The implementation is actually rather simple (well, macros are always a bit involved, but the generated code is).
-- Combined is just a simplified scalaz-Coproduct and Combine a scalaz-Inject.
 - the Ops get lifted into a coproduct of Ops (if it where shapeless we'd write Console :+: Store :+: CNil)
 - the macro is just there to reduce the boilerplate with the type and lifting function definitions.
 

@@ -1,8 +1,8 @@
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 lazy val commonSettings = Seq(
   version := "0.1.0",
-  scalaVersion := "2.11.7",
+  scalaVersion := "2.11.8",
   organization := "ch.inventsoft",
   scalacOptions += "-feature",
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
@@ -16,8 +16,8 @@ lazy val core = project.in(file("core")).
   settings(commonSettings: _*).
   settings(
     name := "free-to-compose",
-    libraryDependencies += "org.spire-math" %% "cats" % "0.3.0",
-    libraryDependencies += "com.chuusai" %% "shapeless" % "2.2.5",
+    libraryDependencies += "org.typelevel" %% "cats" % "0.5.0",
+    libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.1",
     propertiesPath in versioneye := ".versioneye.properties"
   )
   .enablePlugins(VersionEyePlugin)

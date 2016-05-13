@@ -3,7 +3,7 @@ package freetocompose.example
 import java.util.concurrent.atomic.AtomicReference
 import cats.free.Trampoline
 import cats.{~>, Id}
-import cats.state.State
+import cats.data.State
 import Store.functions.Store, StoreOps._
 
 object StoreCompile {
