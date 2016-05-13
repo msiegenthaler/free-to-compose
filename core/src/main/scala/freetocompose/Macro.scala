@@ -102,7 +102,7 @@ class Macro(val c: whitebox.Context) {
     val importHigherKinds =
       q"import scala.language.higherKinds"
     val typeAlias =
-      q"type $alias[F[_]] = _root_.freetocompose.Combine[${desc.opBase.typeSymbol}, F]"
+      q"type $alias[F[_]] = _root_.cats.free.Inject[${desc.opBase.typeSymbol}, F]"
 
     def function(op: Op) = {
       val paramNames = op.params.map(_.name)

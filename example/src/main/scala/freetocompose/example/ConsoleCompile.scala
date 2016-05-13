@@ -3,7 +3,7 @@ package freetocompose.example
 import Console.functions.Console, ConsoleOps._
 import cats.free.Trampoline
 import cats.{~>, Id}
-import cats.state.State
+import cats.data.State
 
 
 object ConsoleCompile {
