@@ -16,7 +16,7 @@ lazy val core = project.in(file("core")).
   settings(commonSettings: _*).
   settings(
     name := "free-to-compose",
-    libraryDependencies += "org.typelevel" %% "cats" % "0.5.0",
+    libraryDependencies += "org.typelevel" %% "cats" % "0.6.0",
     libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.1",
     propertiesPath in versioneye := ".versioneye.properties"
   )
