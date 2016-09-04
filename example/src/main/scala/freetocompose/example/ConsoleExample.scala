@@ -1,7 +1,7 @@
 package freetocompose.example
 
 import scala.language.higherKinds
-import cats.std.function._
+import cats.instances.function._
 import Console.functions._
 import Utils._
 

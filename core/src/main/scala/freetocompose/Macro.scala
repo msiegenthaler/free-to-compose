@@ -156,7 +156,7 @@ class Macro(val c: whitebox.Context) {
   }
 
   private def monadDefinition(desc: Description): Tree = {
-    q"""implicit val monad = _root_.cats.free.Free.freeMonad[${desc.opBase.typeSymbol}]"""
+    q"""implicit val monad = _root_.cats.free.Free.catsFreeMonadForFree[${desc.opBase.typeSymbol}]"""
   }
 
   private def liftedFunction(typeAlias: TypeName, op: Op): Tree = {
