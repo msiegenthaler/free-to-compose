@@ -2,7 +2,7 @@ package freetocompose.example
 
 import scala.language.higherKinds
 import cats.Monad
-import cats.std.list._
+import cats.instances.list._
 import cats.syntax.foldable._
 
 object Utils {
